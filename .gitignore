@@ -1,0 +1,27 @@
+# air
+tmp/
+*.log
+
+# templ generated files
+*_templ.go
+
+# tailwind
+static/css/output.css
+
+# enviroment
+.env
+!.env.example
+
+# node
+node_modules/
+package-lock.json
+
+# logs
+logs/
+npm-debug.log*
+
+# database
+*.sqlite*
+
+# esbuild
+bundle.js

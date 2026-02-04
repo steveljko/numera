@@ -1,0 +1,22 @@
+package layouts
+
+templ Base(title string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Numera | { title }</title>
+			<link href="/static/css/output.css" rel="stylesheet"/>
+		</head>
+		<body class="antialiased">
+			<div id="modal" class="fixed inset-0 z-50 hidden bg-black/50 flex justify-center items-center">
+				<div id="dialog" class="bg-white rounded-xl max-w-lg w-full mx-4 p-6" hx-target="this"></div>
+			</div>
+			<main>
+				{ children... }
+			</main>
+			<script src="/static/js/bundle.js"></script>
+		</body>
+	</html>
+}
