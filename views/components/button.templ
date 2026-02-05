@@ -1,0 +1,46 @@
+package components
+
+templ Button(buttonType, variant, text string, attrs templ.Attributes) {
+	if variant == "secondary" {
+		<button
+			type={ buttonType }
+			class="px-4 py-2 border border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors font-light"
+			{ attrs... }
+		>
+			{ text }
+		</button>
+	} else {
+		<button
+			type={ buttonType }
+			class="w-full py-3 bg-black text-white rounded-xl hover:bg-gray-800 transition font-light cursor-pointer"
+			{ attrs... }
+		>
+			{ text }
+		</button>
+	}
+}
+
+templ ButtonWithIndicator(buttonType, text, indicatorId string) {
+	<button
+		type={ buttonType }
+		class="w-full py-3 bg-black text-white rounded-xl hover:bg-gray-800 transition font-light cursor-pointer relative flex items-center justify-center"
+		hx-indicator={ "#" + indicatorId }
+	>
+		<div id={ indicatorId } class="htmx-indicator opacity-0 absolute inset-0 flex items-center justify-center transition-opacity">
+			<div class="inline-block relative w-5 h-5">
+				<div class="absolute inset-0 border-2 border-white/30 rounded-full"></div>
+				<div class="absolute inset-0 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+			</div>
+		</div>
+		<span class="button-text transition-opacity">{ text }</span>
+	</button>
+}
+
+templ RedirectButton(text, href string) {
+	<a
+		href={ href }
+		class="px-4 py-3 bg-black text-white rounded-xl hover:bg-gray-800 transition font-light cursor-pointer"
+	>
+		{ text }
+	</a>
+}

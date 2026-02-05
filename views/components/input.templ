@@ -1,0 +1,97 @@
+package components
+
+templ FormInput(inputType, name, label, placeholder string, attrs templ.Attributes) {
+	<div>
+		<label class="text-xs uppercase tracking-wider text-gray-500 mb-2 block">{ label }</label>
+		<input
+			type={ inputType }
+			name={ name }
+			placeholder={ placeholder }
+			class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-gray-400 transition"
+			{ attrs... }
+		/>
+		<small id={ "error-" + name } class="text-red-600"></small>
+	</div>
+}
+
+templ FormPasswordInput(name, label, placeholder string, showToggle bool) {
+	<div x-data="{ showPassword: false }">
+		<label class="text-xs uppercase tracking-wider text-gray-500 mb-2 block">{ label }</label>
+		<div class="relative">
+			<input
+				:type="showPassword ? 'text' : 'password'"
+				name={ name }
+				placeholder={ placeholder }
+				class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-gray-400 transition"
+			/>
+			if showToggle {
+				<button
+					type="button"
+					@click="showPassword = !showPassword"
+					class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm cursor-pointer"
+				>
+					<span x-show="!showPassword">Show</span>
+					<span x-show="showPassword">Hide</span>
+				</button>
+			}
+		</div>
+		<small id={ "error-" + name } class="text-red-600"></small>
+	</div>
+}
+
+templ FormCheckbox(name, label string, checked bool) {
+	<div>
+		<label class="flex items-center gap-3 cursor-pointer group">
+			<input
+				type="checkbox"
+				id={ name }
+				name={ name }
+				value="true"
+				if checked {
+					checked
+				}
+				class="w-5 h-5 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-1 cursor-pointer text-gray-900 transition"
+			/>
+			<span class="text-sm text-gray-700 group-hover:text-gray-900 transition-colors">
+				{ label }
+			</span>
+		</label>
+		<small id={ "error-" + name } class="text-red-600"></small>
+	</div>
+}
+
+type SelectOption struct {
+	Value string
+	Label string
+}
+
+templ FormSelect(
+	name string,
+	label string,
+	options []SelectOption,
+	selected string,
+) {
+	<div>
+		<label
+			for={ name }
+			class="text-xs uppercase tracking-wider text-gray-500 mb-2 block"
+		>{ label }</label>
+		<select
+			id={ name }
+			name={ name }
+			class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-gray-400 transition"
+		>
+			for _, option := range options {
+				<option
+					value={ option.Value }
+					if option.Value == selected {
+						selected
+					}
+				>
+					{ option.Label }
+				</option>
+			}
+		</select>
+		<small id={ "error-" + name } class="text-red-600"></small>
+	</div>
+}

@@ -1,0 +1,63 @@
+package pages
+
+import "numera/views/layouts"
+import "numera/views/components"
+
+templ Register() {
+	@layouts.Base("Register") {
+		<div class="w-full h-screen flex items-center justify-center">
+			<div class="w-[24rem]" x-data="{ showPassword: false, showConfirm: false, minDelay: 500 }">
+				<form
+					class="space-y-5"
+					hx-post="/register"
+					hx-swap="none"
+					hx-indicator="#createAccountIndicator"
+					@htmx:before-request.window="
+						$event.detail.xhr.addEventListener('loadstart', function() {
+							const startTime = Date.now();
+							const originalOnload = this.onload;
+							this.onload = function(e) {
+								const elapsed = Date.now() - startTime;
+								const delay = Math.max(0, $data.minDelay - elapsed);
+								setTimeout(() => originalOnload?.call(this, e), delay);
+							};
+						});
+					"
+				>
+					@components.FormInput("text", "name", "Full name", "Your name", nil)
+					@components.FormInput("email", "email", "Email", "your@email.com", nil)
+					@components.FormPasswordInput("password", "Password", "••••••••", true)
+					@components.FormPasswordInput("passwordconfirm", "Confirm Password", "••••••••", true)
+					@components.ButtonWithIndicator("submit", "Create Account", "createAccountIndicator")
+				</form>
+				<p class="text-center text-sm text-gray-600 my-8">
+					Already have an account?
+					<a href="/login" class="text-gray-900 hover:underline">Sign in</a>
+				</p>
+			</div>
+		</div>
+	}
+}
+
+templ FormErrors(errors map[string]string) {
+	<small id="error-name" hx-swap-oob="true" class="text-red-600">
+		if errors["name"] != "" {
+			{ errors["name"] }
+		}
+	</small>
+	<small id="error-email" hx-swap-oob="true" class="text-red-600">
+		if errors["email"] != "" {
+			{ errors["email"] }
+		}
+	</small>
+	<small id="error-password" hx-swap-oob="true" class="text-red-600">
+		if errors["password"] != "" {
+			{ errors["password"] }
+		}
+	</small>
+	<small id="error-passwordconfirm" hx-swap-oob="true" class="text-red-600">
+		if errors["passwordconfirm"] != "" {
+			{ errors["passwordconfirm"] }
+		}
+	</small>
+}

@@ -1,1 +1,122 @@
 @import "tailwindcss";
+
+.htmx-indicator {
+	opacity: 1 !important;
+  transition-delay: 300ms;
+}
+
+.htmx-indicator.htmx-request ~ .button-text {
+	opacity: 0;
+}
+
+/* notifications */
+.notify-container {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column-reverse;
+    pointer-events: none;
+}
+
+.notify {
+    padding: 8px 10px;
+    border-radius: 100px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+.notify-show {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+.notify-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.notify-success .notify-close:hover {
+    background-color: #c3e6cb;
+}
+
+.notify-warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.notify-warning .notify-close:hover {
+    background-color: #ffeaa7;
+}
+
+.notify-error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.notify-error .notify-close:hover {
+    background-color: #f5c6cb;
+}
+
+.notify-info {
+    background-color: #cce5ff;
+    color: #004085;
+}
+
+.notify-info .notify-close:hover {
+    background-color: #b8daff;
+}
+
+.notify-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.notify-icon svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+}
+
+.notify-body {
+    flex: 1;
+}
+
+.notify-title {
+    font-weight: 500;
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+.notify-description {
+    font-size: 14px;
+    color: #6b7280;
+    margin-top: 4px;
+    line-height: 1.5;
+}
+
+.notify-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: color 0.2s;
+}
+
+.notify-close svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    stroke-width: 1.5px;
+}
