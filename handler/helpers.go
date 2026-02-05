@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -33,4 +34,70 @@ func routeParamAsInt64(r *http.Request, key string) (int64, error) {
 	}
 
 	return id, nil
+}
+
+func IsHtmx(r *http.Request) bool {
+	return r.Header.Get("HX-Request") == "true"
+}
+
+func RedirectUsingHtmx(w http.ResponseWriter, url string) {
+	w.Header().Add("HX-Redirect", url)
+}
+
+// ToastType represents the type of toast notification
+type ToastType string
+
+const (
+	ToastSuccess ToastType = "success"
+	ToastError   ToastType = "error"
+	ToastWarning ToastType = "warning"
+	ToastInfo    ToastType = "info"
+)
+
+// ToastData contains the data for the toast event
+type ToastData struct {
+	Type       ToastType `json:"type"`
+	Text       string    `json:"text"`
+	Descripton string    `json:"description,omitempty"`
+}
+
+// TriggerToast sends an HX-Trigger header to show a toast notification
+func TriggerToast(w http.ResponseWriter, toastType ToastType, text string, description string) {
+	data := ToastData{
+		Type:       toastType,
+		Text:       text,
+		Descripton: description,
+	}
+
+	triggerData := map[string]ToastData{
+		"toast": data,
+	}
+
+	jsonData, err := json.Marshal(triggerData)
+	if err != nil {
+		w.Header().Set("HX-Trigger", "toast")
+		return
+	}
+
+	w.Header().Set("HX-Trigger", string(jsonData))
+}
+
+// TriggerSuccessToast sends a success-themed toast notification to the client
+func TriggerSuccessToast(w http.ResponseWriter, text string) {
+	TriggerToast(w, ToastSuccess, text, "")
+}
+
+// TriggerErrorToast sends an error-themed toast notification to the client
+func TriggerErrorToast(w http.ResponseWriter, text string) {
+	TriggerToast(w, ToastError, text, "")
+}
+
+// TriggerWarningToast sends a warning-themed toast notification to the client
+func TriggerWarningToast(w http.ResponseWriter, text string) {
+	TriggerToast(w, ToastWarning, text, "")
+}
+
+// TriggerInfoToast sends a information-themed toast notification to the client
+func TriggerInfoToast(w http.ResponseWriter, text string) {
+	TriggerToast(w, ToastInfo, text, "")
 }
