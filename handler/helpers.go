@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -34,6 +35,14 @@ func routeParamAsInt64(r *http.Request, key string) (int64, error) {
 	}
 
 	return id, nil
+}
+
+func GetUserID(ctx context.Context) int64 {
+	userID, ok := ctx.Value("USER_ID").(int64)
+	if !ok {
+		return 0
+	}
+	return userID
 }
 
 func IsHtmx(r *http.Request) bool {

@@ -39,6 +39,43 @@ templ Register() {
 	}
 }
 
+templ Login() {
+	@layouts.Base("Login") {
+		<div class="w-full h-screen flex items-center justify-center">
+			<div class="w-[24rem]" x-data="{ minDelay: 500 }">
+				<form
+					class="space-y-5"
+					hx-post="/login"
+					hx-swap="none"
+					hx-indicator="#signInIndicator"
+					@htmx:before-request.window="
+						$event.detail.xhr.addEventListener('loadstart', function() {
+							const startTime = Date.now();
+							const originalOnload = this.onload;
+							this.onload = function(e) {
+								const elapsed = Date.now() - startTime;
+								const delay = Math.max(0, $data.minDelay - elapsed);
+								setTimeout(() => originalOnload?.call(this, e), delay);
+							};
+						});
+					"
+				>
+					@components.FormInput("email", "email", "Email", "your@email.com", nil)
+					@components.FormPasswordInput("password", "Password", "••••••••", false)
+					<div class="w-full flex items-center justify-end text-sm">
+						<a href="#" class="text-gray-600 hover:text-gray-900 transition">Forgot password?</a>
+					</div>
+					@components.ButtonWithIndicator("submit", "Sign In", "signInIndicator")
+				</form>
+				<p class="text-center text-sm text-gray-600 my-8">
+					Don't have an account? 
+					<a href="/register" class="text-gray-900 hover:underline">Sign up</a>
+				</p>
+			</div>
+		</div>
+	}
+}
+
 templ FormErrors(errors map[string]string) {
 	<small id="error-name" hx-swap-oob="true" class="text-red-600">
 		if errors["name"] != "" {

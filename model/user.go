@@ -28,9 +28,26 @@ type User struct {
 	ID        int64     `db:"id"`
 	Name      string    `db:"name"`
 	Email     string    `db:"email"`
+	Password  string    `db:"password"`
 	Currency  Currency  `db:"currency"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
+}
+
+type UserView struct {
+	ID       int64    `db:"id"`
+	Name     string   `db:"name"`
+	Email    string   `db:"email"`
+	Currency Currency `db:"currency"`
+}
+
+func (u *User) ToView() UserView {
+	return UserView{
+		ID:       u.ID,
+		Name:     u.Name,
+		Email:    u.Email,
+		Currency: u.Currency,
+	}
 }
 
 // GetUserByID gets a user using id
@@ -65,7 +82,7 @@ func GetUserByID(db *sql.DB, id int64) (*User, error) {
 func GetUserByEmail(db *sql.DB, email string) (*User, error) {
 	query := `
 		SELECT
-			id, name, email, currency, created_at, updated_at 
+			id, name, email, password, currency, created_at, updated_at 
     FROM users WHERE email = ? LIMIT 1
 	`
 
@@ -74,6 +91,7 @@ func GetUserByEmail(db *sql.DB, email string) (*User, error) {
 		&user.ID,
 		&user.Name,
 		&user.Email,
+		&user.Password,
 		&user.Currency,
 		&user.CreatedAt,
 		&user.UpdatedAt,
@@ -94,6 +112,11 @@ type CreateUserInput struct {
 	Email           string `form:"email" validate:"required,email,max=100"`
 	Password        string `form:"password" validate:"required,min=8"`
 	PasswordConfirm string `form:"password_confirm" validate:"required,eqfield=Password"`
+}
+
+type LoginInput struct {
+	Email    string `form:"email" validate:"required,email,max=100"`
+	Password string `form:"password" validate:"required,min=8"`
 }
 
 // CreateUser hashes the user's password and persists the record to the db

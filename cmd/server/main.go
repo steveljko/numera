@@ -9,6 +9,7 @@ import (
 	"numera/config"
 	"numera/db"
 	"numera/handler"
+	"numera/pkg/session"
 	"os"
 	"os/signal"
 	"sync"
@@ -24,19 +25,27 @@ import (
 const defaultShutdownPeriod = 30 * time.Second
 
 type App struct {
-	addr   string
-	cfg    *config.Config
-	db     *sql.DB
-	logger *logrus.Logger
-	wg     sync.WaitGroup
+	addr    string
+	cfg     *config.Config
+	db      *sql.DB
+	logger  *logrus.Logger
+	session *session.Session
+	wg      sync.WaitGroup
 }
 
-func NewApp(addr string, cfg *config.Config, db *sql.DB, logger *logrus.Logger) *App {
+func NewApp(
+	addr string,
+	cfg *config.Config,
+	db *sql.DB,
+	logger *logrus.Logger,
+	session *session.Session,
+) *App {
 	return &App{
-		addr:   addr,
-		cfg:    cfg,
-		db:     db,
-		logger: logger,
+		addr:    addr,
+		cfg:     cfg,
+		db:      db,
+		logger:  logger,
+		session: session,
 	}
 }
 
@@ -57,13 +66,20 @@ func (app *App) Serve() error {
 		AllowCredentials: app.cfg.AllowCredentials,
 		MaxAge:           app.cfg.MaxAge,
 	}))
+	r.Use(app.session.LoadAndSave)
 
 	// serve static files
 	fs := http.FileServer(http.Dir("./static"))
 	r.Handle("/static/*", http.StripPrefix("/static/", fs))
 
-	userHandler := handler.NewUserHandler(app.db, app.logger)
+	userHandler := handler.NewUserHandler(app.db, app.logger, app.session)
 	userHandler.RegisterRoutes(r)
+
+	authHandler := handler.NewAuthHandler(app.db, app.logger, app.session)
+	authHandler.RegisterRoutes(r)
+
+	dashboardHandler := handler.NewDashboardHandler(app.db, app.logger, app.session)
+	dashboardHandler.RegisterRoutes(r)
 
 	server := &http.Server{
 		Addr:    app.addr,
@@ -150,6 +166,11 @@ func main() {
 		logger.WithError(err).Fatal("failed to open database")
 	}
 
+	session := session.New(dbConn, cfg)
+	// if err != nil {
+	// 	logger.WithError(err).Fatal("failed to initialize session")
+	// }
+
 	const migrationDir = "migrations/"
 	logger.Info("running database migrations")
 	if err := db.RunMigrations(dbConn, migrationDir); err != nil {
@@ -160,7 +181,7 @@ func main() {
 		logger.Fatal("port is not provided")
 	}
 
-	server := NewApp(fmt.Sprintf(":%s", cfg.Port), cfg, dbConn, logger)
+	server := NewApp(fmt.Sprintf(":%s", cfg.Port), cfg, dbConn, logger, session)
 	if err := server.Serve(); err != nil {
 		logger.WithError(err).Fatal("server failed")
 	}

@@ -3,7 +3,9 @@ package handler
 import (
 	"database/sql"
 	"net/http"
+	"numera/middleware"
 	"numera/model"
+	"numera/pkg/session"
 	"numera/pkg/validator"
 	"numera/views/pages"
 
@@ -12,20 +14,27 @@ import (
 )
 
 type UserHandler struct {
-	db     *sql.DB
-	logger *logrus.Logger
+	db      *sql.DB
+	logger  *logrus.Logger
+	session *session.Session
 }
 
-func NewUserHandler(db *sql.DB, logger *logrus.Logger) *UserHandler {
+func NewUserHandler(db *sql.DB, logger *logrus.Logger, session *session.Session) *UserHandler {
 	return &UserHandler{
-		db:     db,
-		logger: logger,
+		db:      db,
+		logger:  logger,
+		session: session,
 	}
 }
 
 func (h *UserHandler) RegisterRoutes(r *chi.Mux) {
-	r.Get("/register", h.handleShowRegister)
-	r.Post("/register", h.handleRegister)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.RequireGuest(h.session))
+		r.Use(middleware.WithLogger(h.logger))
+
+		r.Get("/register", h.handleShowRegister)
+		r.Post("/register", h.handleRegister)
+	})
 }
 
 // handleShowRegister renders register page
@@ -35,6 +44,8 @@ func (h *UserHandler) handleShowRegister(w http.ResponseWriter, r *http.Request)
 
 // handleRegister cretes new user
 func (h *UserHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context())
+
 	input := model.CreateUserInput{
 		Name:            r.PostFormValue("name"),
 		Email:           r.PostFormValue("email"),
@@ -42,15 +53,12 @@ func (h *UserHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 		PasswordConfirm: r.PostFormValue("passwordconfirm"),
 	}
 
-	val := validator.New()
-	errors := val.Validate(input)
+	v := validator.New()
+	errors := v.Validate(input)
 
 	user, _ := model.GetUserByEmail(h.db, input.Email)
 	if user != nil {
-		h.logger.WithFields(logrus.Fields{
-			"path":  r.URL.Path,
-			"email": input.Email,
-		}).Error("email already taken")
+		logger.WithField("email", input.Email).Error("email_already_taken")
 
 		errors = validator.New().AddError(errors, "email", "This email address is already in use")
 	}
@@ -63,17 +71,12 @@ func (h *UserHandler) handleRegister(w http.ResponseWriter, r *http.Request) {
 
 	err := model.CreateUser(h.db, input)
 	if err != nil {
-		h.logger.WithFields(logrus.Fields{
-			"error": err.Error(),
-			"path":  r.URL.Path,
-			"email": input.Email,
-		}).Error("failed to create user")
+		logger.WithField("email", input.Email).Error("user_failed_to_create")
+
 		TriggerErrorToast(w, "Oops! We ran into an issue creating your account. Let’s try that again.")
+		return
 	}
 
-	h.logger.WithFields(logrus.Fields{
-		"path":  r.URL.Path,
-		"email": input.Email,
-	}).Info("user successfully created")
+	logger.WithField("email", input.Email).Info("user_successfully_created")
 	RedirectUsingHtmx(w, "/login")
 }

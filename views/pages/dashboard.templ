@@ -1,0 +1,13 @@
+package pages
+
+import "numera/views/layouts"
+import "numera/model"
+
+templ Dashboard(user model.UserView) {
+	@layouts.Base("Dashboard") {
+		<div class="p-4 bg-gray-50 rounded-xl">
+			<h1>Hello, { user.Name }!</h1>
+			<a hx-delete="/logout" hx-swap="none" class="cursor-pointer">Logout</a>
+		</div>
+	}
+}
