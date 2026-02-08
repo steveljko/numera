@@ -146,7 +146,7 @@ func (h *AccountHandler) handleCreate(w http.ResponseWriter, r *http.Request) {
 		"currency":     input.Currency,
 	}).Info("account_created_successfully")
 
-	TriggerHtmx(w, "reloadAccounts")
+	TriggerWithToast(w, "reloadAccounts", ToastSuccess, "Successfully created account!")
 }
 
 func (h *AccountHandler) handleShowUpdate(w http.ResponseWriter, r *http.Request) {
@@ -289,8 +289,7 @@ func (h *AccountHandler) handleUpdate(w http.ResponseWriter, r *http.Request) {
 		"account_type": input.AccountType,
 	}).Info("account_updated_successfully")
 
-	// TODO: trigger toast notification
-	TriggerHtmx(w, "reloadAccounts")
+	TriggerWithToast(w, "reloadAccounts", ToastSuccess, "Successfully updated account!")
 }
 
 func (h *AccountHandler) handleDestroy(w http.ResponseWriter, r *http.Request) {

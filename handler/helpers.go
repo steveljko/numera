@@ -114,3 +114,26 @@ func TriggerWarningToast(w http.ResponseWriter, text string) {
 func TriggerInfoToast(w http.ResponseWriter, text string) {
 	TriggerToast(w, ToastInfo, text, "")
 }
+
+// TODO: add toast with description later if needed
+// TODO: make toast notification survive page redirection
+// TriggerWithToast sends both a custom event and a toast notification
+func TriggerWithToast(w http.ResponseWriter, event string, toastType ToastType, text string) {
+	toastData := ToastData{
+		Type: toastType,
+		Text: text,
+	}
+
+	triggerData := map[string]interface{}{
+		"toast": toastData,
+		event:   nil,
+	}
+
+	jsonData, err := json.Marshal(triggerData)
+	if err != nil {
+		w.Header().Set("HX-Trigger", event)
+		return
+	}
+
+	w.Header().Set("HX-Trigger", string(jsonData))
+}
