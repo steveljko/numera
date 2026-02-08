@@ -12,6 +12,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.33
 	github.com/pressly/goose/v3 v3.26.0
+	github.com/shopspring/decimal v1.4.0
 	github.com/sirupsen/logrus v1.9.4
 	golang.org/x/crypto v0.46.0
 )

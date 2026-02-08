@@ -5,9 +5,17 @@ import "numera/model"
 
 templ Dashboard(user model.UserView) {
 	@layouts.Base("Dashboard") {
-		<div class="p-4 bg-gray-50 rounded-xl">
+		<div class="p-4">
 			<h1>Hello, { user.Name }!</h1>
 			<a hx-delete="/logout" hx-swap="none" class="cursor-pointer">Logout</a>
+			<button hx-get="/accounts/create" hx-target="#dialog">Create</button>
+			<div
+				id="accounts"
+				hx-get="/accounts"
+				hx-trigger="load, reloadAccounts from:body"
+				hx-target="this"
+				hx-swap="innerHTML"
+			></div>
 		</div>
 	}
 }

@@ -81,6 +81,13 @@ func (app *App) Serve() error {
 	dashboardHandler := handler.NewDashboardHandler(app.db, app.logger, app.session)
 	dashboardHandler.RegisterRoutes(r)
 
+	accountHandler := handler.NewAccountHandler(app.db, app.logger, app.session)
+	accountHandler.RegisterRoutes(r)
+
+	if !app.cfg.IsProd() {
+		printRoutes(r, app.logger)
+	}
+
 	server := &http.Server{
 		Addr:    app.addr,
 		Handler: r,
@@ -185,4 +192,19 @@ func main() {
 	if err := server.Serve(); err != nil {
 		logger.WithError(err).Fatal("server failed")
 	}
+}
+
+func printRoutes(r *chi.Mux, logger *logrus.Logger) {
+	logger.Info("=== REGISTERED ROUTES ===")
+	walkFunc := func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+		logger.WithFields(logrus.Fields{
+			"method": method,
+			"route":  route,
+		}).Info("route")
+		return nil
+	}
+	if err := chi.Walk(r, walkFunc); err != nil {
+		logger.WithError(err).Error("Failed to walk routes")
+	}
+	logger.Info("=== END ROUTES ===")
 }

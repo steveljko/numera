@@ -53,6 +53,10 @@ func RedirectUsingHtmx(w http.ResponseWriter, url string) {
 	w.Header().Add("HX-Redirect", url)
 }
 
+func TriggerHtmx(w http.ResponseWriter, event string) {
+	w.Header().Add("HX-Trigger", event)
+}
+
 // ToastType represents the type of toast notification
 type ToastType string
 

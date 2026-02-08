@@ -1,0 +1,303 @@
+package pages
+
+import (
+	"fmt"
+	"numera/model"
+	"numera/views/components"
+)
+
+templ AccountSlider(accounts []model.AccountView) {
+	<div class="max-w-6xl mx-auto" x-data>
+		<div
+			x-ref="slider"
+			@wheel.prevent="$refs.slider.scrollBy({ left: $event.deltaY * 2.5, behavior: 'smooth' })"
+			class="flex gap-4 overflow-x-scroll custom-scrollbar-visible smooth-scroll pb-4 pt-2"
+		>
+			for _, account := range accounts {
+				<div class="flex-shrink-0">
+					@AccountCard(account, false)
+				</div>
+			}
+		</div>
+	</div>
+}
+
+templ AccountCard(account model.AccountView, isSelected bool) {
+	<div
+		class={
+			"relative w-[280px] flex-shrink-0 rounded-2xl p-6 cursor-pointer transition-all duration-200",
+			templ.KV("bg-emerald-50/50 border border-emerald-600", isSelected),
+			templ.KV("bg-white border border-gray-200 hover:border-gray-300", !isSelected),
+		}
+		x-data="{ menuOpen: false }"
+	>
+		<div class="flex justify-between">
+			<p
+				class={
+					"text-xs uppercase tracking-wider mb-3 flex items-center gap-2",
+					templ.KV("text-emerald-900", isSelected),
+					templ.KV("text-gray-500", !isSelected),
+				}
+			>
+				<span class={ "w-2 h-2 rounded-full", account.GetColorClass() }></span>
+				{ account.AccountType }
+			</p>
+			<div class="relative" @click.stop>
+				<button
+					@click="menuOpen = !menuOpen"
+					if isSelected {
+						:class="menuOpen ? 'bg-emerald-200 text-emerald-700' : 'bg-emerald-100 text-emerald-600 hover:bg-emerald-200'"
+					} else {
+						:class="menuOpen ? 'bg-gray-100 text-gray-900' : 'text-gray-400 hover:bg-gray-100'"
+					}
+					class="p-1 rounded-lg cursor-pointer transition-colors duration-200"
+				>
+					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4.5">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 12.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5ZM12 18.75a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5Z"></path>
+					</svg>
+				</button>
+				<div
+					x-show="menuOpen"
+					@click.away="menuOpen = false"
+					x-transition:enter="transition ease-out duration-100"
+					x-transition:enter-start="opacity-0 scale-95"
+					x-transition:enter-end="opacity-100 scale-100"
+					x-transition:leave="transition ease-in duration-75"
+					x-transition:leave-start="opacity-100 scale-100"
+					x-transition:leave-end="opacity-0 scale-95"
+					class="fixed w-48 rounded-xl bg-white border border-gray-200 shadow-lg px-2 py-2 z-50 mt-2"
+					style="display: none;"
+				>
+					<a
+						class="block px-4 py-2 text-sm text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+						hx-get={ fmt.Sprintf("/accounts/%d/edit", account.ID) }
+						hx-swap="innerHTML"
+						hx-target="#dialog"
+						@click="menuOpen = false"
+					>
+						Edit Account
+					</a>
+					<hr class="my-1 border-gray-100"/>
+					<a
+						class="block px-4 py-2 text-sm text-red-600 rounded-xl hover:bg-red-50 transition-colors"
+						hx-delete={ fmt.Sprintf("/accounts/%d/destroy", account.ID) }
+						x-data="{ minDelay: 500 }"
+						@htmx:before-request.window="
+              $event.detail.xhr.addEventListener('loadstart', function() {
+                const startTime = Date.now();
+                const originalOnload = this.onload;
+                this.onload = function(e) {
+                  const elapsed = Date.now() - startTime;
+                  const delay = Math.max(0, $data.minDelay - elapsed);
+                  setTimeout(() => originalOnload?.call(this, e), delay);
+                };
+              });
+            "
+						@click="menuOpen = false"
+					>
+						Delete Account
+					</a>
+				</div>
+			</div>
+		</div>
+		<p
+			class={
+				"text-sm mb-2 transition-colors duration-200",
+				templ.KV("text-emerald-800", isSelected),
+				templ.KV("text-gray-600", !isSelected),
+			}
+		>{ account.Name }</p>
+		<p
+			class={ "text-2xl font-light",
+      templ.KV("text-emerald-900", isSelected && account.Balance.IsPositive()),
+      templ.KV("text-gray-900", !isSelected && account.Balance.IsPositive()),
+      templ.KV("text-red-500", account.Balance.IsNegative()) }
+		>{ account.GetBalance() }</p>
+	</div>
+}
+
+templ CreateAccountModal() {
+	<div class="space-y-4">
+		<div class="flex justify-between items-center mb-4">
+			<h2 class="text-xl font-light text-gray-900">Create Account</h2>
+			<button
+				type="button"
+				onclick="closeModal()"
+				class="text-gray-400 cursor-pointer hover:text-gray-600 transition-colors"
+			>
+				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+				</svg>
+			</button>
+		</div>
+		<form
+			hx-post="/accounts/create"
+			hx-swap="none"
+			hx-indicator="#createAccountIndicator"
+			class="space-y-4"
+			x-data="{ minDelay: 500 }"
+			@htmx:before-request.window="
+        $event.detail.xhr.addEventListener('loadstart', function() {
+          const startTime = Date.now();
+          const originalOnload = this.onload;
+          this.onload = function(e) {
+            const elapsed = Date.now() - startTime;
+            const delay = Math.max(0, $data.minDelay - elapsed);
+            setTimeout(() => originalOnload?.call(this, e), delay);
+          };
+        });
+      "
+		>
+			@components.FormInput("text", "name", "Account Name", "My Checking Account", nil)
+			@components.FormSelect(
+				"account_type",
+				"Account Type",
+				[]components.SelectOption{
+					{Value: "checking", Label: "Checking"},
+					{Value: "savings", Label: "Savings"},
+					{Value: "cash", Label: "Cash"},
+				},
+				"checking",
+			)
+			@components.FormInput("number", "balance", "Initial Balance", "0.00", templ.Attributes{"step": "any"})
+			@components.FormCheckbox("allows_negative_balance", "Allow negative balance", false)
+			@components.FormSelect(
+				"currency",
+				"Currency",
+				[]components.SelectOption{
+					{Value: "USD", Label: "USD ($)"},
+					{Value: "EUR", Label: "EUR (€)"},
+					{Value: "GBP", Label: "GBP (£)"},
+					{Value: "RSD", Label: "RSD (дин)"},
+				},
+				"USD",
+			)
+			@components.FormSelect(
+				"color",
+				"Color",
+				[]components.SelectOption{
+					{Value: "blue", Label: "Blue"},
+					{Value: "green", Label: "Green"},
+					{Value: "red", Label: "Red"},
+					{Value: "purple", Label: "Purple"},
+					{Value: "orange", Label: "Orange"},
+					{Value: "gray", Label: "Gray"},
+					{Value: "yellow", Label: "Yellow"},
+					{Value: "pink", Label: "Pink"},
+					{Value: "indigo", Label: "Indigo"},
+					{Value: "Teal", Label: "Teal"},
+				},
+				"blue",
+			)
+			<div class="flex gap-3 pt-4">
+				@components.ButtonWithIndicator("submit", "Create Account", "createAccountIndicator")
+				@components.Button("button", "secondary", "Cancel", templ.Attributes{"onclick": "closeModal()"})
+			</div>
+		</form>
+	</div>
+}
+
+templ EditAccountModal(account model.AccountView) {
+	<div class="space-y-4">
+		<div class="flex justify-between items-center mb-4">
+			<h2 class="text-xl font-light text-gray-900">Edit Account</h2>
+			<button
+				type="button"
+				onclick="closeModal()"
+				class="text-gray-400 cursor-pointer hover:text-gray-600 transition-colors"
+			>
+				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+				</svg>
+			</button>
+		</div>
+		<form
+			hx-put={ fmt.Sprintf("/accounts/%d/update", account.ID) }
+			hx-swap="none"
+			hx-indicator="#editAccountIndicator"
+			class="space-y-4"
+			x-data="{ minDelay: 500 }"
+			@htmx:before-request.window="
+        $event.detail.xhr.addEventListener('loadstart', function() {
+          const startTime = Date.now();
+          const originalOnload = this.onload;
+          this.onload = function(e) {
+            const elapsed = Date.now() - startTime;
+            const delay = Math.max(0, $data.minDelay - elapsed);
+            setTimeout(() => originalOnload?.call(this, e), delay);
+          };
+        });
+      "
+		>
+			@components.FormInput("text", "name", "Account Name", account.Name, templ.Attributes{"value": account.Name})
+			@components.FormSelect(
+				"account_type",
+				"Account Type",
+				[]components.SelectOption{
+					{Value: "checking", Label: "Checking"},
+					{Value: "savings", Label: "Savings"},
+					{Value: "cash", Label: "Cash"},
+				},
+				string(account.AccountType),
+			)
+			@components.FormCheckbox("allows_negative_balance", "Allow negative balance", account.AllowsNegativeBalance)
+			@components.FormSelect(
+				"currency",
+				"Currency",
+				[]components.SelectOption{
+					{Value: "USD", Label: "USD ($)"},
+					{Value: "EUR", Label: "EUR (€)"},
+					{Value: "GBP", Label: "GBP (£)"},
+					{Value: "RSD", Label: "RSD (дин)"},
+					{Value: "JPY", Label: "Yen (¥)"},
+					{Value: "CHF", Label: "CHF"},
+				},
+				string(account.Currency),
+			)
+			@components.FormSelect(
+				"color",
+				"Color",
+				[]components.SelectOption{
+					{Value: "blue", Label: "Blue"},
+					{Value: "green", Label: "Green"},
+					{Value: "red", Label: "Red"},
+					{Value: "purple", Label: "Purple"},
+					{Value: "orange", Label: "Orange"},
+					{Value: "gray", Label: "Gray"},
+					{Value: "yellow", Label: "Yellow"},
+					{Value: "pink", Label: "Pink"},
+					{Value: "indigo", Label: "Indigo"},
+					{Value: "teal", Label: "Teal"},
+				},
+				account.Color,
+			)
+			<div class="flex gap-3 pt-4">
+				@components.ButtonWithIndicator("submit", "Save Changes", "editAccountIndicator")
+				@components.Button("button", "secondary", "Cancel", templ.Attributes{"onclick": "closeModal()"})
+			</div>
+		</form>
+	</div>
+}
+
+templ CreateAccountFormErrors(errors map[string]string) {
+	<small id="error-name" hx-swap-oob="true" class="text-red-600">
+		if errors["name"] != "" {
+			{ errors["name"] }
+		}
+	</small>
+	<small id="error-accounttype" hx-swap-oob="true" class="text-red-600">
+		if errors["accounttype"] != "" {
+			{ errors["accounttype"] }
+		}
+	</small>
+	<small id="error-color" hx-swap-oob="true" class="text-red-600">
+		if errors["color"] != "" {
+			{ errors["color"] }
+		}
+	</small>
+	<small id="error-currency" hx-swap-oob="true" class="text-red-600">
+		if errors["currency"] != "" {
+			{ errors["currency"] }
+		}
+	</small>
+}
