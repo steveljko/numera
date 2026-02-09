@@ -45,5 +45,12 @@ func (h *DashboardHandler) handleIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	view(w, r, pages.Dashboard(user.ToView()))
+	total, err := model.CalculateTotalBalanceByUserID(h.db, user.ID)
+	if err != nil {
+		logger.WithError(err).WithField("user_id", user.ID).Warn("failed_to_calculate_total_balance")
+		http.Error(w, "Failed, please refresh!", http.StatusInternalServerError)
+		return
+	}
+
+	view(w, r, pages.Dashboard(user.ToViewWithTotalBalance(total)))
 }

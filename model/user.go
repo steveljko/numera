@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/shopspring/decimal"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -35,10 +36,11 @@ type User struct {
 }
 
 type UserView struct {
-	ID       int64    `db:"id"`
-	Name     string   `db:"name"`
-	Email    string   `db:"email"`
-	Currency Currency `db:"currency"`
+	ID           int64    `db:"id"`
+	Name         string   `db:"name"`
+	Email        string   `db:"email"`
+	Currency     Currency `db:"currency"`
+	TotalBalance decimal.Decimal
 }
 
 func (u *User) ToView() UserView {
@@ -48,6 +50,20 @@ func (u *User) ToView() UserView {
 		Email:    u.Email,
 		Currency: u.Currency,
 	}
+}
+
+func (u *User) ToViewWithTotalBalance(total decimal.Decimal) UserView {
+	return UserView{
+		ID:           u.ID,
+		Name:         u.Name,
+		Email:        u.Email,
+		Currency:     u.Currency,
+		TotalBalance: total,
+	}
+}
+
+func (uv *UserView) GetTotalBalanceWithCurrency() string {
+	return FormatBalance(uv.TotalBalance, uv.Currency)
 }
 
 // GetUserByID gets a user using id
@@ -135,6 +151,41 @@ func CreateUser(db *sql.DB, input CreateUserInput) error {
 	_, err = db.Exec(query, input.Name, input.Email, hashedPassword, CurrencyUSD)
 	if err != nil {
 		return fmt.Errorf("failed to insert user: %w", err)
+	}
+
+	return nil
+}
+
+func CalculateTotalBalanceByUserID(db *sql.DB, userID int64) (decimal.Decimal, error) {
+	var total decimal.Decimal
+	sumQuery := `SELECT COALESCE(SUM(balance), 0) FROM accounts WHERE user_id = ? AND is_active = 1`
+	err := db.QueryRow(sumQuery, userID).Scan(&total)
+	if err != nil {
+		return decimal.Zero, err
+	}
+
+	return total, err
+}
+
+type ChangeCurrencyRequest struct {
+	Currency Currency `validate:"required,oneof=EUR USD RSD GBP JPY CHF"`
+}
+
+func ChangeCurrencyByUserID(db *sql.DB, userID int64, currency Currency) error {
+	query := `
+		UPDATE users
+		SET currency = ?
+		WHERE id = ?
+	`
+
+	result, err := db.Exec(query, currency, userID)
+	if err != nil {
+		return fmt.Errorf("failed to change currency for user: %w", err)
+	}
+
+	_, err = result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
 
 	return nil

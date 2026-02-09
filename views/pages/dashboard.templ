@@ -5,10 +5,8 @@ import "numera/model"
 
 templ Dashboard(user model.UserView) {
 	@layouts.Base("Dashboard") {
-		<div class="p-4">
-			<h1>Hello, { user.Name }!</h1>
-			<a hx-delete="/logout" hx-swap="none" class="cursor-pointer">Logout</a>
-			<button hx-get="/accounts/create" hx-target="#dialog">Create</button>
+		<div class="max-w-6xl mx-auto" x-data>
+			@Top(user)
 			<div
 				id="accounts"
 				hx-get="/accounts"
@@ -18,4 +16,47 @@ templ Dashboard(user model.UserView) {
 			></div>
 		</div>
 	}
+}
+
+templ Top(user model.UserView) {
+	<div class="my-10">
+		<div class="flex justify-between items-start mb-2">
+			<h1 class="text-2xl font-light text-gray-500">Total Balance</h1>
+			<button
+				class="w-10 h-10 rounded-full bg-black text-white flex items-center justify-center cursor-pointer hover:bg-gray-800 transition"
+				hx-get="/accounts/create"
+				hx-target="#dialog"
+				hx-swap="innerHTML"
+			>
+				+
+			</button>
+		</div>
+		<div
+			id="total"
+			class="flex items-baseline gap-6"
+			hx-swap-oob="true"
+		>
+			<p id="currency" class="text-6xl font-light">{ user.GetTotalBalanceWithCurrency() }</p>
+			<div class="flex flex-col text-sm text-gray-500">
+				<form>
+					<select
+						name="currency"
+						class="mt-1 bg-transparent focus:outline-none cursor-pointer"
+						hx-put="/currency-change"
+						hx-include="this"
+						hx-trigger="change"
+						hx-swap="outerHTML"
+						hx-target="#currency"
+					>
+						<option value="USD" selected?={ user.Currency == "USD" }>USD</option>
+						<option value="EUR" selected?={ user.Currency == "EUR" }>EUR</option>
+						<option value="GBP" selected?={ user.Currency == "GBP" }>GBP</option>
+						<option value="RSD" selected?={ user.Currency == "RSD" }>RSD</option>
+						<option value="JPY" selected?={ user.Currency == "JPY" }>JPY</option>
+						<option value="CHF" selected?={ user.Currency == "CHF" }>CHF</option>
+					</select>
+				</form>
+			</div>
+		</div>
+	</div>
 }

@@ -13,7 +13,11 @@ func RequireAuth(sessionMgr *session.Session) func(http.Handler) http.Handler {
 			userID := sessionMgr.GetUserID(r)
 
 			if userID == 0 {
-				http.Redirect(w, r, "/login", http.StatusSeeOther)
+				if r.Header.Get("HX-Redirect") == "true" {
+					w.Header().Set("HX-Redirect", "/login")
+				} else {
+					http.Redirect(w, r, "/login", http.StatusSeeOther)
+				}
 				return
 			}
 

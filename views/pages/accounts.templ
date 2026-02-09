@@ -7,18 +7,16 @@ import (
 )
 
 templ AccountSlider(accounts []model.AccountView) {
-	<div class="max-w-6xl mx-auto" x-data>
-		<div
-			x-ref="slider"
-			@wheel.prevent="$refs.slider.scrollBy({ left: $event.deltaY * 2.5, behavior: 'smooth' })"
-			class="flex gap-4 overflow-x-scroll custom-scrollbar-visible smooth-scroll pb-4 pt-2"
-		>
-			for _, account := range accounts {
-				<div class="flex-shrink-0">
-					@AccountCard(account, false)
-				</div>
-			}
-		</div>
+	<div
+		x-ref="slider"
+		@wheel.prevent="$refs.slider.scrollBy({ left: $event.deltaY * 2.5, behavior: 'smooth' })"
+		class="flex gap-4 overflow-x-scroll custom-scrollbar-visible smooth-scroll pb-4 pt-2"
+	>
+		for _, account := range accounts {
+			<div class="flex-shrink-0">
+				@AccountCard(account, false)
+			</div>
+		}
 	</div>
 }
 
@@ -112,7 +110,7 @@ templ AccountCard(account model.AccountView, isSelected bool) {
       templ.KV("text-emerald-900", isSelected && account.Balance.IsPositive()),
       templ.KV("text-gray-900", !isSelected && account.Balance.IsPositive()),
       templ.KV("text-red-500", account.Balance.IsNegative()) }
-		>{ account.GetBalance() }</p>
+		>{ account.GetBalanceWithCurrency() }</p>
 	</div>
 }
 

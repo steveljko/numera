@@ -72,25 +72,8 @@ func (av *AccountView) GetColorClass() string {
 	}
 }
 
-func (av *AccountView) GetBalance() string {
-	formatted := av.Balance.StringFixed(2)
-
-	switch av.Currency {
-	case "USD":
-		return "$" + formatted
-	case "EUR":
-		return "€" + formatted
-	case "GBP":
-		return "£" + formatted
-	case "RSD":
-		return formatted + " дин"
-	case "JPY":
-		return "¥" + av.Balance.StringFixed(0)
-	case "CHF":
-		return "CHF " + formatted
-	default:
-		return formatted + " " + string(av.Currency)
-	}
+func (av *AccountView) GetBalanceWithCurrency() string {
+	return FormatBalance(av.Balance, av.Currency)
 }
 
 func (a *Account) ToView() AccountView {

@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"numera/model"
 	"strconv"
 
 	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
+	"github.com/shopspring/decimal"
 )
 
 // view renders a templ component and handles any rendering errors.
@@ -136,4 +138,25 @@ func TriggerWithToast(w http.ResponseWriter, event string, toastType ToastType, 
 	}
 
 	w.Header().Set("HX-Trigger", string(jsonData))
+}
+
+func FormatBalance(total decimal.Decimal, currency model.Currency) string {
+	formatted := total.StringFixed(2)
+
+	switch currency {
+	case "USD":
+		return "$" + formatted
+	case "EUR":
+		return "€" + formatted
+	case "GBP":
+		return "£" + formatted
+	case "RSD":
+		return formatted + " дин"
+	case "JPY":
+		return "¥" + total.StringFixed(0)
+	case "CHF":
+		return "CHF " + formatted
+	default:
+		return formatted + " " + string(currency)
+	}
 }
