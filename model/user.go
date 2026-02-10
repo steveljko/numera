@@ -156,15 +156,31 @@ func CreateUser(db *sql.DB, input CreateUserInput) error {
 	return nil
 }
 
-func CalculateTotalBalanceByUserID(db *sql.DB, userID int64) (decimal.Decimal, error) {
-	var total decimal.Decimal
-	sumQuery := `SELECT COALESCE(SUM(balance), 0) FROM accounts WHERE user_id = ? AND is_active = 1`
-	err := db.QueryRow(sumQuery, userID).Scan(&total)
+func CalculateBalanceByCurrencies(db *sql.DB, userID int64) (map[Currency]decimal.Decimal, error) {
+	query := `
+		SELECT currency, COALESCE(SUM(balance), 0)
+		FROM accounts
+		WHERE user_id = ? AND is_active = 1
+		GROUP BY currency
+		ORDER BY currency`
+
+	rows, err := db.Query(query, userID)
 	if err != nil {
-		return decimal.Zero, err
+		return nil, err
+	}
+	defer rows.Close()
+
+	balances := make(map[Currency]decimal.Decimal)
+	for rows.Next() {
+		var currency Currency
+		var balance decimal.Decimal
+		if err := rows.Scan(&currency, &balance); err != nil {
+			return nil, err
+		}
+		balances[currency] = balance
 	}
 
-	return total, err
+	return balances, rows.Err()
 }
 
 type ChangeCurrencyRequest struct {

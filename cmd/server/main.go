@@ -10,6 +10,7 @@ import (
 	"numera/db"
 	"numera/handler"
 	"numera/pkg/session"
+	"numera/services"
 	"os"
 	"os/signal"
 	"sync"
@@ -72,13 +73,15 @@ func (app *App) Serve() error {
 	fs := http.FileServer(http.Dir("./static"))
 	r.Handle("/static/*", http.StripPrefix("/static/", fs))
 
-	userHandler := handler.NewUserHandler(app.db, app.logger, app.session)
+	exchangeService := services.NewExchangeService(app.logger)
+
+	userHandler := handler.NewUserHandler(app.db, app.logger, app.session, exchangeService)
 	userHandler.RegisterRoutes(r)
 
 	authHandler := handler.NewAuthHandler(app.db, app.logger, app.session)
 	authHandler.RegisterRoutes(r)
 
-	dashboardHandler := handler.NewDashboardHandler(app.db, app.logger, app.session)
+	dashboardHandler := handler.NewDashboardHandler(app.db, app.logger, app.session, exchangeService)
 	dashboardHandler.RegisterRoutes(r)
 
 	accountHandler := handler.NewAccountHandler(app.db, app.logger, app.session)
